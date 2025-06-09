@@ -6,14 +6,14 @@ set -o pipefail
 # --- Configuración General de Odoo IoT Box ---
 ODEC_VERSION="18.0"
 ODEC_REPO="https://github.com/odoo/odoo.git"
-IOTBOX_INSTALL_DIR="/opt/odoo/iotbox" # Directorio de instalación de Odoo IoT Box
-IOTBOX_PORT=8069 # Puerto por defecto de la IoT Box
+IOTBOX_INSTALL_DIR="/opt/odoo/iotbox"
+IOTBOX_PORT=8069
 
 # Directorios de Log
 TEMP_LOG_FILE="/tmp/odoo_iotbox_install_$(date +%Y%m%d_%H%M%S).log"
 FINAL_LOG_FILE="/var/log/odoo_iotbox_install.log"
 
-# --- Configuración Opcional de Ngrok (Normalmente no necesario si el TPV se conecta a gCloud) ---
+# --- Configuración Opcional de Ngrok ---
 ENABLE_NGROK="false"
 NGROK_URL="https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz"
 NGROK_BIN_NAME="ngrok"
@@ -44,22 +44,18 @@ error_exit() {
 clean_iotbox_installation() {
     log_message "Iniciando limpieza de instalación anterior de Odoo IoT Box (si existe)..."
 
-    # Detener y deshabilitar servicio de Odoo IoT Box
     sudo systemctl stop odoo-iotbox.service 2>/dev/null || true
     sudo systemctl disable odoo-iotbox.service 2>/dev/null || true
     sudo rm -f /etc/systemd/system/odoo-iotbox.service 2>/dev/null || true
-    sudo systemctl daemon-reload # Recargar systemd para limpiar servicios eliminados
+    sudo systemctl daemon-reload
 
-    # Eliminar el directorio de instalación de Odoo IoT Box
     sudo rm -rf "${IOTBOX_INSTALL_DIR}" 2>/dev/null || true
 
-    # Eliminar el usuario odoo (si existe)
     if id "odoo" &>/dev/null; then
         sudo pkill -KILL -u odoo 2>/dev/null || true
         sudo userdel -r odoo 2>/dev/null || true
     fi
 
-    # Eliminar logs temporales y finales de instalaciones anteriores
     sudo rm -rf /tmp/odoo_iotbox_install_*.log 2>/dev/null || true
     sudo rm -f "${FINAL_LOG_FILE}" 2>/dev/null || true
 
@@ -118,7 +114,6 @@ log_message "Dependencias del sistema para IoT Box instaladas correctamente."
 
 log_message "Instalando módulos globales de npm (less, less-plugin-clean-css)..."
 sudo npm install -g less less-plugin-clean-css &>> "${TEMP_LOG_FILE}" || log_message "Advertencia: Fallo al instalar módulos npm globales. Esto es común en sistemas minimalistas, pero Odoo puede compilar CSS/Less internamente."
-
 
 # --- Configuración de Odoo IoT Box ---
 log_message "Configurando Odoo IoT Box..."
@@ -198,7 +193,7 @@ if [ "${ENABLE_NGROK}" = "true" ]; then
     sudo tar -xvzf /tmp/ngrok.tgz -C /tmp/ &>> "${TEMP_LOG_FILE}" || error_exit "Fallo al descomprimir Ngrok."
     sudo mv "/tmp/${NGROK_BIN_NAME}" "${NGROK_INSTALL_PATH}" &>> "${TEMP_LOG_FILE}" || error_exit "Fallo al mover Ngrok al directorio de instalación."
     sudo rm -v /tmp/ngrok.tgz &>> "${TEMP_LOG_FILE}"
-    sudo rm -v "/tmp/${NGROK_BIN_NAME}" &>> "${TEMP_LOG_FILE}" # Borrar el ejecutable temporal si se quedó
+    sudo rm -v "/tmp/${NGROK_BIN_NAME}" &>> "${TEMP_LOG_FILE}"
     sudo chmod +x "${NGROK_INSTALL_PATH}" &>> "${TEMP_LOG_FILE}"
     log_message "Ngrok instalado en ${NGROK_INSTALL_PATH}."
 
@@ -209,7 +204,7 @@ if [ "${ENABLE_NGROK}" = "true" ]; then
     sudo tee "${NGROK_SERVICE_FILE}" > /dev/null <<EOF
 [Unit]
 Description=Ngrok Tunnel Service
-After=network.target odoo-iotbox.service # Asegúrate de que la IoT Box inicie primero
+After=network.target odoo-iotbox.service
 
 [Service]
 ExecStart=${NGROK_INSTALL_PATH} http ${IOTBOX_PORT}

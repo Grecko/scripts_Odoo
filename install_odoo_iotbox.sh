@@ -14,7 +14,7 @@ TEMP_LOG_FILE="/tmp/odoo_iotbox_install_$(date +%Y%m%d_%H%M%S).log"
 FINAL_LOG_FILE="/var/log/odoo_iotbox_install.log"
 
 # --- Configuración Opcional de Ngrok ---
-ENABLE_NGROK="false"
+ENABLE_NGROK="true"
 NGROK_URL="https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz"
 NGROK_BIN_NAME="ngrok"
 NGROK_INSTALL_PATH="/usr/local/bin/${NGROK_BIN_NAME}"

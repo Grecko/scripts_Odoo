@@ -1,0 +1,30 @@
+[Unit]
+Description=Chrome Kiosk Monitor for tpvuser
+# Asegura que el servicio se inicie después de que la red y el entorno gráfico estén listos
+After=network.target graphical.target
+
+[Service]
+Type=simple
+# El servicio se ejecuta como el usuario tpvuser
+User=tpvuser
+Group=tpvuser
+# Directorio de trabajo del servicio
+WorkingDirectory=/home/tpvuser
+# Configuración de variables de entorno para la sesión gráfica
+# Asegura que Chrome sepa dónde debe abrirse
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/tpvuser/.Xauthority"
+# El comando que systemd ejecutará.
+# Usamos un bucle 'while true' para que el script se ejecute cada 10 segundos.
+ExecStart=/bin/bash -c "while true; do /home/tpvuser/check_chrome_kiosk.sh; sleep 10; done"
+# Reiniciar el servicio si falla
+Restart=always
+# Tiempo de espera antes de reiniciar
+RestartSec=5
+# Redirige la salida estándar y de error del servicio al journal de systemd
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+# Inicia el servicio cuando el target gráfico esté disponible
+WantedBy=graphical.target
